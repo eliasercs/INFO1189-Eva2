@@ -1,0 +1,29 @@
+type Query {
+  bebidas: [Bebida!]!
+  bebida(id: Int!): Bebida
+}
+
+type Mutation {
+  createBebida(input: CrearBebidaInput!): Bebida!
+}
+
+type Bebida {
+  id: Int!
+  codigo: String!
+  nombre: String!
+  marca: String!
+  precio: Int!
+  stock: Int!
+  categoriaId: Int!
+  createdAt: String!
+  updatedAt: String!
+}
+
+input CrearBebidaInput {
+  codigo: String!
+  nombre: String!
+  marca: String!
+  precio: Int!
+  stock: Int!
+  categoriaId: Int!
+}

@@ -10,6 +10,10 @@ class BebidaReadRepository(ABC):
     @abstractmethod
     def obtener_bebidas(self) -> List[Bebida]:
         pass
+    
+    @abstractmethod
+    def obtener_por_codigo(self, codigo: str) -> Optional[Bebida]:
+        pass
 
 class BebidaWriteRepository(ABC):
     @abstractmethod

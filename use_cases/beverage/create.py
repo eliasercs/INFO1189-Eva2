@@ -1,42 +1,50 @@
-from datetime import datetime
+from adapters.presenters.beverage_presenter import BebidaPresenter
+from adapters.gateways.beverage_repository import BebidaRepository
 from entities.beverage import Bebida
-from adapters.gateways.beverage_repository import BebidaWriteRepository
+from datetime import datetime
 
 class CrearBebidaUseCase:
-    def __init__(self, bebida_repository: BebidaWriteRepository):
-        self.bebida_repository = bebida_repository
-
-    def execute(self, comando: 'CrearBebidaComando') -> Bebida:
-        # Validaciones de aplicación
-        if comando.precio <= 0:
-            raise ValueError("El precio debe ser mayor a 0")
-
-        if comando.stock < 0:
-            raise ValueError("El stock no puede ser negativo")
-
-        # Verificar si el código ya existe
-        bebida_existente = self.bebida_repository.obtener_por_codigo(comando.codigo)
-        if bebida_existente:
-            raise ValueError("Ya existe una bebida con este código")
-
-        # Crear entidad
+    def __init__(self, repository: BebidaRepository):
+        self.repository = repository
+    
+    def execute(self, datos_bebida: dict) -> dict:
+        """
+        Crea una nueva bebida
+        """
+        # Validaciones
+        if not datos_bebida.get('nombre'):
+            return {"success": False, "msg": "El nombre es requerido"}
+        
+        if datos_bebida.get('precio', 0) <= 0:
+            return {"success": False, "msg": "El precio debe ser mayor a 0"}
+        
+        if datos_bebida.get('stock', 0) < 0:
+            return {"success": False, "msg": "El stock no puede ser negativo"}
+        
+        codigo_existente = self.repository.obtener_por_codigo(datos_bebida['codigo'])
+        if codigo_existente is not None:
+            return {
+                "success": False, 
+                "msg": f"Ya existe una bebida con el código '{datos_bebida['codigo']}'"
+            }
+        
+        # Crear entidad Bebida
         bebida = Bebida(
-            codigo=comando.codigo,
-            nombre=comando.nombre,
-            marca=comando.marca,
-            precio=comando.precio,
-            stock=comando.stock,
-            categoria_id=comando.categoria_id
+            id=None,
+            codigo=datos_bebida['codigo'],
+            nombre=datos_bebida['nombre'],
+            marca=datos_bebida.get('marca', ''),
+            precio=datos_bebida['precio'],
+            stock=datos_bebida.get('stock', 0),
+            categoria_id=datos_bebida['categoria_id'],
+            created_at=datetime.now(),
+            updated_at=datetime.now()
         )
-
-        # Guardar a través del repositorio
-        return self.bebida_repository.guardar(bebida)
-
-class CrearBebidaComando:
-    def __init__(self, codigo: str, nombre: str, marca: str, precio: int, stock: int, categoria_id: int):
-        self.codigo = codigo
-        self.nombre = nombre
-        self.marca = marca
-        self.precio = precio
-        self.stock = stock
-        self.categoria_id = categoria_id
+        
+        # Guardar
+        bebida_guardada = self.repository.guardar(bebida)
+        
+        if not bebida_guardada:
+            return {"success": False, "msg": "Error al guardar la bebida"}
+        
+        return BebidaPresenter.present_bebida(bebida_guardada)
